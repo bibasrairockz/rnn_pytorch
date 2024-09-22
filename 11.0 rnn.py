@@ -36,7 +36,7 @@ n_categories = len(all_categories)
 # print(a.to(torch.device('cuda')))
 
 n_hidden = 128
-rnn = RNN(N_LETTERS, n_hidden, n_categories)
+rnn = RNN(N_LETTERS, n_hidden, n_categories).to(device)
 
 # one step
 # input_tensor = letter_to_tensor('A')
@@ -47,10 +47,10 @@ rnn = RNN(N_LETTERS, n_hidden, n_categories)
 # # print(next_hidden.size())
 
 # # whole sequence/name
-input_tensor = line_to_tensor('Albert')
-hidden_tensor = rnn.init_hidden()
+# input_tensor = line_to_tensor('Albert')
+# hidden_tensor = rnn.init_hidden()
 
-output, next_hidden = rnn(input_tensor[0], hidden_tensor)
+# output, next_hidden = rnn(input_tensor[0], hidden_tensor)
 # print(output.size())
 # print(next_hidden.size())
 
@@ -58,19 +58,19 @@ def category_from_output(output):
     category_idx = torch.argmax(output).item()
     return all_categories[category_idx]
 
-print(category_from_output(output))
+# print(category_from_output(output))
 
 criterion = nn.NLLLoss()
 learning_rate = 0.005
 optimizer = torch.optim.SGD(rnn.parameters(), lr=learning_rate)
 
 def train(line_tensor, category_tensor):
-    hidden = rnn.init_hidden()
+    hidden = rnn.init_hidden().to(device)
     
     for i in range(line_tensor.size()[0]):
         output, hidden = rnn(line_tensor[i], hidden)
         
-    loss = criterion(output, category_tensor)
+    loss = criterion(output, category_tensor.to(device))
     
     optimizer.zero_grad()
     loss.backward()
@@ -86,7 +86,7 @@ n_iters = 100000
 for i in range(n_iters):
     category, line, category_tensor, line_tensor = random_training_example(category_lines, all_categories)
     
-    output, loss = train(line_tensor, category_tensor)
+    output, loss = train(line_tensor.to(device), category_tensor.to(device))
     current_loss += loss 
     
     if (i+1) % plot_steps == 0:
@@ -106,9 +106,9 @@ plt.show()
 def predict(input_line):
     print(f"\n> {input_line}")
     with torch.no_grad():
-        line_tensor = line_to_tensor(input_line)
+        line_tensor = line_to_tensor(input_line).to(device)
         
-        hidden = rnn.init_hidden()
+        hidden = rnn.init_hidden().to(device)
     
         for i in range(line_tensor.size()[0]):
             output, hidden = rnn(line_tensor[i], hidden)
@@ -118,7 +118,7 @@ def predict(input_line):
 
 
 while True:
-    sentence = input("Input:")
+    sentence = input("\nInput:")
     if sentence == "quit":
         break
     
